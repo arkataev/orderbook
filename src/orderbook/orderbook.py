@@ -1,10 +1,17 @@
 import heapq
+from typing import List
+
+__all__ = ["Order", "OrderBook", "calculate_twp"]
 
 
 class Order:
+    """Orderable Order to use in OrderBook"""
+
     __slots__ = ('uid', '_price')
 
     def __init__(self, uid: int, price: float):
+        if price < 0:
+            raise ValueError('Price must be positive number')
         self.uid = uid
         self._price = -price  # Invert price to use in min-heap as it was a max-heap
 
@@ -18,24 +25,49 @@ class Order:
 
 
 class OrderBook:
+    """
+    Collection of Orders with fast calculation of
+    Time-Weighted Average Maximum Price of all containing Orders and
+    retrieving current maximum price.
+
+        Example:
+            order_book = OrderBook()
+            order_book.add(1000, Order(1, 10.0)
+            order_book.add(2000, Order(2, 11.0)
+
+            order_book.get_max_price()  # get current maximum price
+            order_book.twamp            # get Time-Weighted Average Maximum Price
+    """
+
     def __init__(self):
-        self.init_timestamp = self.current_timestamp = 0
         self.twmp = 0.0
-        self.removed_orders = set()
-        self.pq = []
+        self._init_timestamp = self._current_timestamp = 0
+        self._removed_orders = set()
+        self._pq: List[Order] = []
+
+    @property
+    def current_timestamp(self) -> int:
+        """OrderBook current timestamp"""
+        return self._current_timestamp
 
     @property
     def twamp(self) -> float:
         """Get Time-Weighted Average Maximum Price"""
-        return self.twmp / (self.current_timestamp - self.init_timestamp)
+        return self.twmp / (self.current_timestamp - self._init_timestamp)
+
+    def is_empty(self) -> bool:
+        """Are there any Orders in OrderNook"""
+        return not self._pq
+
+    def is_initiated(self) -> bool:
+        """Were there any Orders in OrderBook?"""
+        return self._init_timestamp > 0
 
     def get_max_price(self) -> float:
-        """
+        """Get current overall maximum price of all non-deleted Orders in OrderBook"""
 
-        :return:
-        """
         # Speed-up resolving attributes in a loop
-        pq, removed_orders = self.pq, self.removed_orders
+        pq, removed_orders = self._pq, self._removed_orders
         heappop, remove_order = heapq.heappop, removed_orders.remove
 
         while pq:
@@ -57,48 +89,51 @@ class OrderBook:
 
     def add(self, timestamp: int, order: Order) -> None:
         """
+        Add order from OrderBook and update time-weighted maximum average price
+        if current maximum price differs from that before adding
 
-        :param timestamp:
-        :param order:
-        :return:
+        :param timestamp: Order adding timestamp
+        :param order: Order to add
         """
-        if not self.init_timestamp:
-            self.init_timestamp = timestamp
+        if not self._init_timestamp:
+            self._init_timestamp = timestamp
 
         current_max_price = self.get_max_price()
+        heapq.heappush(self._pq, order)
 
-        if current_max_price != order.price:
-            self.update_twmp(self.current_timestamp, timestamp, current_max_price)
-            self.current_timestamp = timestamp
+        if current_max_price != self.get_max_price():
+            self._update_twmp(self.current_timestamp, timestamp, current_max_price)
+            self._current_timestamp = timestamp
 
-        heapq.heappush(self.pq, order)
         return None
 
     def remove(self, timestamp: int, order_id: int) -> None:
         """
+        Remove Order from OrderBook and update time-weighted maximum average price
+        if current maximum price differs from that before removing
 
-        :param timestamp:
-        :param order_id: order uid to remove from OrderBook
+        :param timestamp: timestamp when Order was removed
+        :param order_id: Order uid to remove from OrderBook
         :return:
         """
         current_max_price = self.get_max_price()
-        self.removed_orders.add(order_id)
+        self._removed_orders.add(order_id)
 
         if current_max_price != self.get_max_price():
-            self.update_twmp(self.current_timestamp, timestamp, current_max_price)
-            self.current_timestamp = timestamp
+            self._update_twmp(self.current_timestamp, timestamp, current_max_price)
+            self._current_timestamp = timestamp
 
         return None
 
-    def update_twmp(self, time_start: int, time_end: int, max_price: float) -> None:
+    def _update_twmp(self, time_start: int, time_end: int, max_price: float) -> None:
         self.twmp += calculate_twp(time_start, time_end, max_price)
         return None
 
 
 def calculate_twp(time_start: int, time_end: int, price: float) -> float:
-    """Calculate Time-Weighted  Price"""
-    if time_start > time_end:
+    """Calculate Time-Weighted Price"""
+    if time_start >= time_end:
         raise ValueError('End time should be greater then start time')
     elif price < 0:
-        raise ValueError("Price can't be negative")
+        raise ValueError("Price must be positive number")
     return (time_end - time_start) * price
