@@ -209,3 +209,16 @@ def test_default_scenario(order_book):
     order_book.remove(4000, 100)
 
     assert order_book.twamp == 10.5
+
+
+def test_compressed(order_book):
+    import random
+
+    order_book.MAX_SIZE = 3
+    orders = [Order(i, float(random.randint(1, 100))) for i in range(1, 10)]
+    sorted_orders = sorted(orders)
+
+    for timestamp, order in zip(range(1, len(orders)), orders):
+        order_book.add(timestamp, order)
+
+    assert order_book.get_max_price() == sorted_orders[0].price

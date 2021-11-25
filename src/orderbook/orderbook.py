@@ -1,7 +1,12 @@
 import heapq
-from typing import List
+import uuid
+from typing import List, Iterator, Optional
+import os
 
 __all__ = ["Order", "OrderBook", "calculate_twp"]
+
+ROOT = os.path.dirname(__file__)
+DUMP_PATH = os.path.join(ROOT, 'orders_dump')
 
 
 class Order:
@@ -23,6 +28,9 @@ class Order:
     def __lt__(self, other: "Order"):
         return self.price > other.price
 
+    def __str__(self):
+        return f"{self.uid} {self.price}"
+
 
 class OrderBook:
     """
@@ -38,12 +46,15 @@ class OrderBook:
             order_book.get_max_price()  # get current maximum price
             order_book.twamp            # get Time-Weighted Average Maximum Price
     """
+    MAX_SIZE = 100
 
-    def __init__(self):
+    def __init__(self, orders_dump: Optional[str] = None):
         self.twmp = 0.0
         self._init_timestamp = self._current_timestamp = 0
         self._removed_orders = set()
         self._pq: List[Order] = []
+        self._dumped_orders = orders_dump or []
+        self._cached_max_price_order: Optional[Order] = None
 
     @property
     def current_timestamp(self) -> int:
@@ -62,6 +73,19 @@ class OrderBook:
     def is_initiated(self) -> bool:
         """Were there any Orders in OrderBook?"""
         return self._init_timestamp > 0
+
+    def get_cached_max_price_order(self) -> Optional[Order]:
+        dump_pq = filter(
+            lambda o: o.uid not in self._removed_orders,
+            heapq.merge(*(load_orders(path) for path in self._dumped_orders))
+        )
+
+        try:
+            order = next(dump_pq)
+        except StopIteration:
+            order = None
+
+        return order
 
     def get_max_price(self) -> float:
         """Get current overall maximum price of all non-deleted Orders in OrderBook"""
@@ -83,7 +107,13 @@ class OrderBook:
                 break
         else:
             # all orders were removed or not yet added
-            return 0.0
+            cached_order = self.get_cached_max_price_order()
+            return cached_order.price if cached_order else 0.0
+
+        cached_max_price_order = self.get_cached_max_price_order()
+
+        if cached_max_price_order and cached_max_price_order.price > order.price:
+            return cached_max_price_order.price
 
         return order.price
 
@@ -99,6 +129,11 @@ class OrderBook:
             self._init_timestamp = timestamp
 
         current_max_price = self.get_max_price()
+
+        if len(self._pq) >= self.MAX_SIZE:
+            self._dumped_orders.append(dump_orders_sorted(self._pq))
+            self._pq = []
+
         heapq.heappush(self._pq, order)
 
         if current_max_price != self.get_max_price():
@@ -137,3 +172,20 @@ def calculate_twp(time_start: int, time_end: int, price: float) -> float:
     elif price < 0:
         raise ValueError("Price must be positive number")
     return (time_end - time_start) * price
+
+
+def dump_orders_sorted(orders: List[Order]) -> str:
+    file_path = str(uuid.uuid4())
+    orders.sort()
+    with open(os.path.join(DUMP_PATH, file_path), 'w') as f:
+        f.writelines("\n".join(map(str, orders)))
+
+    return file_path
+
+
+def load_orders(file_path: str) -> Iterator[Order]:
+    with open(os.path.join(DUMP_PATH, file_path), 'r') as f:
+        lines = iter(f.readline, "")
+        for line in lines:
+            uid, price = line.split(sep=" ")
+            yield Order(int(uid), float(price))

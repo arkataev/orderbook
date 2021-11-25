@@ -49,4 +49,4 @@ if __name__ == "__main__":
 
         end = time.perf_counter()
 
-    logging.info(f"Time-Weighted Average Maximum Price: {orderbook.twamp} \nTime: {round(end - start, 5)} second")
+    logging.info(f"Time-Weighted Average Maximum Price: {orderbook.twamp} \nTime: {round(end - start, 5)} seconds")
