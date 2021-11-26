@@ -3,6 +3,8 @@ import enum
 
 from .orderbook import Order
 
+__all__ = ["parse_command"]
+
 
 class CommandType(enum.Enum):
     INSERT = "I"
