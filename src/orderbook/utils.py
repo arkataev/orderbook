@@ -1,9 +1,9 @@
 import dataclasses
 import enum
 
-from .orderbook import Order
+from order_book import Order
 
-__all__ = ["parse_command"]
+__all__ = ["parse_command", "CommandType"]
 
 
 class CommandType(enum.Enum):

@@ -3,19 +3,18 @@ import sys
 import time
 from argparse import ArgumentParser
 
-from .orderbook import OrderBook
-from .utils import parse_command, CommandType
+from order_book import OrderBook
+from utils import parse_command, CommandType
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO, stream=sys.stderr)
 
 parser = ArgumentParser()
 parser.add_argument('file_path', type=str)
 ns = parser.parse_args()
-orderbook = OrderBook()
-
 
 try:
     with open(ns.file_path) as f:
+        orderbook = OrderBook()
         start = time.perf_counter()
 
         for line in f.readlines():

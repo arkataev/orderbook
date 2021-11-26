@@ -6,7 +6,7 @@ __all__ = ["Order", "OrderBook", "calculate_twp"]
 
 
 class Order:
-    """Orderable Order to use in OrderBook"""
+    """Comparable Order to use in OrderBook. Orders compared by price"""
 
     __slots__ = ('uid', '_price')
 
@@ -64,7 +64,7 @@ class OrderBook:
         return self.twmp / (self.current_timestamp - self._init_timestamp)
 
     def is_empty(self) -> bool:
-        """Are there any Orders in OrderNook"""
+        """Are there any Orders in OrderBook?"""
         return not self._pq
 
     def is_initiated(self) -> bool:
@@ -122,7 +122,6 @@ class OrderBook:
 
         :param timestamp: timestamp when Order was removed
         :param order_id: Order uid to remove from OrderBook
-        :return:
         """
         current_max_price = self.get_max_price()
         self._removed_orders.add(order_id)

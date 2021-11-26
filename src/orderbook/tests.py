@@ -2,8 +2,8 @@ from unittest import mock
 
 import pytest
 
-from .orderbook import Order, OrderBook, calculate_twp
-from .utils import parse_command
+from order_book import Order, OrderBook, calculate_twp
+from utils import parse_command
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ def test_add_order_update_twmp(order_book):
 
     assert order_book.current_timestamp == 0
 
-    with mock.patch('orderbook.orderbook.OrderBook._update_twmp') as update_twmp:
+    with mock.patch('order_book.OrderBook._update_twmp') as update_twmp:
         order_book.add(timestamp, Order(1, 2))
         update_twmp.assert_called_with(0, timestamp, order_book_current_max)
 
@@ -75,7 +75,7 @@ def test_add_order_with_same_price_not_update_twmp(order_book):
     """
     assert order_book.current_timestamp == order_book.twmp == 0
 
-    with mock.patch('orderbook.orderbook.OrderBook._update_twmp') as update_twmp:
+    with mock.patch('order_book.OrderBook._update_twmp') as update_twmp:
         order_book.add(1, Order(1, 0))
         update_twmp.assert_not_called()
 
@@ -95,7 +95,7 @@ def test_remove_order_update_twmp(order_book):
     order_book.add(timestamp, order)
     order_book_current_max = order_book.get_max_price()
 
-    with mock.patch('orderbook.orderbook.OrderBook._update_twmp') as update_twmp:
+    with mock.patch('order_book.OrderBook._update_twmp') as update_twmp:
         order_book.remove(2, 1)
         update_twmp.assert_called_with(timestamp, 2, order_book_current_max)
 
@@ -116,7 +116,7 @@ def test_remove_order_same_price_not_update_twmp(order_book):
     order_book.add(timestamp, order_1)
     order_book.add(timestamp, order_2)
 
-    with mock.patch('orderbook.orderbook.OrderBook._update_twmp') as update_twmp:
+    with mock.patch('order_book.OrderBook._update_twmp') as update_twmp:
         order_book.remove(2, 1)
         update_twmp.assert_not_called()
 
