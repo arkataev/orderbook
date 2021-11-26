@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 from .orderbook import Order, OrderBook, calculate_twp
+from .utils import parse_command
 
 
 @pytest.fixture
@@ -209,6 +210,12 @@ def test_default_scenario(order_book):
     order_book.remove(4000, 100)
 
     assert order_book.twamp == 10.5
+
+
+@pytest.mark.parametrize("command_string", ["abc I 1 1", "1000 R 1 1", "1000 E abc 1", "1000 E 1 abc"])
+def test_parse_command_error(command_string):
+    with pytest.raises(ValueError):
+        parse_command(command_string)
 
 
 @pytest.mark.parametrize("max_orders", [10, 100, 1000, 10000, 100000, 1000000])
