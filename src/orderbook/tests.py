@@ -211,11 +211,11 @@ def test_default_scenario(order_book):
     assert order_book.twamp == 10.5
 
 
-def test_compressed(order_book):
+@pytest.mark.parametrize("max_orders", [10, 100, 1000, 10000, 100000, 1000000])
+def test_orderbook_load(order_book, max_orders):
     import random
 
-    order_book.MAX_SIZE = 3
-    orders = [Order(i, float(random.randint(1, 100))) for i in range(1, 10)]
+    orders = [Order(i, float(random.randint(1, 100))) for i in range(1, max_orders)]
     sorted_orders = sorted(orders)
 
     for timestamp, order in zip(range(1, len(orders)), orders):
