@@ -17,4 +17,3 @@ class OrderBooksManager:
 
     def load_orders(self, dump_path: str) -> List[Order]:
         """Load order book orders from storage"""
-

@@ -15,7 +15,7 @@ def merge_load_orders(*file_paths: str) -> Iterator[Order]:
 
 
 def dump_orders_desc(orders: List[Order], file_path: str = None) -> str:
-    """Dump copy of orders list to disk in descending order. Orders with maximum price is always first"""
+    """Dump copy of orders list to disk in descending order. Order with maximum price is always first"""
     _file_path = file_path or str(uuid.uuid4())
     _orders = sorted(orders)
 

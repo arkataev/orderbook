@@ -61,10 +61,12 @@ class OrderBook:
     @property
     def twamp(self) -> float:
         """Get Time-Weighted Average Maximum Price"""
+
+        # TODO:: division is quite slow, we could calculate twamp as orders added or deleted
         return self.twmp / (self.current_timestamp - self._init_timestamp)
 
     def is_empty(self) -> bool:
-        """Are there any Orders in OrderNook"""
+        """Are there any Orders in OrderBook"""
         return not self._pq
 
     def is_initiated(self) -> bool:
