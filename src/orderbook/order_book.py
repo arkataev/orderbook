@@ -8,27 +8,20 @@ __all__ = ["Order", "OrderBook", "calculate_twp"]
 class Order:
     """Comparable Order to use in OrderBook. Orders compared by price"""
 
-    __slots__ = ('uid', '_price')
+    __slots__ = ('uid', 'price')
 
     def __init__(self, uid: int, price: float):
-        if price < 0:
-            raise ValueError('Price must be positive number')
         self.uid = uid
-        self._price = -price  # Invert price to use in min-heap as it was a max-heap
-
-    @property
-    def price(self):
-        # Not to confuse price usage, this should be reversed back to positive value
-        return -self._price
+        self.price = price
 
     def __lt__(self, other: "Order"):
-        return self.price > other.price
-
-    def __eq__(self, other: "Order"):
-        return self.price == other.price
+        return self.price < other.price
 
     def __str__(self):
         return f"{self.uid} {self.price}"
+
+    def __neg__(self):
+        return Order(self.uid, -self.price)
 
 
 class OrderBook:
@@ -93,7 +86,7 @@ class OrderBook:
             # all orders were removed or not yet added
             return 0.0
 
-        return order.price
+        return -order.price
 
     def add(self, timestamp: int, order: Order) -> None:
         """
@@ -107,7 +100,7 @@ class OrderBook:
             self._init_timestamp = timestamp
 
         current_max_price = self.get_max_price()
-        heapq.heappush(self._pq, order)
+        heapq.heappush(self._pq, -order)
 
         if current_max_price != self.get_max_price():
             self._update_twmp(self.current_timestamp, timestamp, current_max_price)

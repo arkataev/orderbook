@@ -223,7 +223,7 @@ def test_orderbook_load(order_book, max_orders):
     import random
 
     orders = [Order(i, float(random.randint(1, 100))) for i in range(1, max_orders)]
-    sorted_orders = sorted(orders)
+    sorted_orders = sorted(orders, reverse=True)
 
     for timestamp, order in zip(range(1, len(orders)), orders):
         order_book.add(timestamp, order)
